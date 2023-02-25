@@ -34,9 +34,9 @@ jobs:
           pip install -r requirements.txt
           
       - name: Working
-        env:
-            uid: ${{secrets.uid}}
-            upw: ${{secrets.upw}}
-            email: ${{secrets.email}}
-            city: ${{secrets.city}}
+#         env:
+#             uid: ${{secrets.uid}}
+#             upw: ${{secrets.upw}}
+#             email: ${{secrets.email}}
+#             city: ${{secrets.city}}
         run: python clock.py
