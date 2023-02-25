@@ -36,5 +36,5 @@ jobs:
       - name: Working
         env:
             uid: ${{secrets.uid}}
-            upw: ${{secrets.psw}}
+            psw: ${{secrets.psw}}
         run: python hope.py
