@@ -1,161 +1,84 @@
-import requests
-from bs4 import BeautifulSoup
-import re
+from selenium.webdriver import Firefox
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import time
+from HTMLTable import HTMLTable
 import yagmail
-import os
 
-# proxies = {
-#     "http": "http://117.160.132.37:9091"
-# }
-obj = re.compile('parent.window.location="(?P<url>.*?)"', re.S)
-obj1 = re.compile('失败', re.S)
-obj2 = re.compile('<div style="width:100%;height:30px;"></div>(?P<success>.*?)onclick="window.location', re.S)
-resp = requests.post('https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/first0')
-resp.encoding = 'utf8'
-# print(resp.text)
-# print('---------------------------------------------------------------------------------------')
-soup = BeautifulSoup(resp.text, "html.parser")
-values = soup.find_all('input')
-data = {
-    'uid': os.environ["uid"],  # -------------------------------这里输入学号（必填）！
-    'upw': os.environ["upw"],  # ---------------------------------这里输入密码（必填）！
-    'smbtn': values[2]['value'],
-    'hh28': values[3]['value']
+web = Firefox()
+web.get("https://cas.s.zzu.edu.cn/cas/login?service=https%3A%2F%2Fjw.v.zzu.edu.cn%2Feams%2Fsso%2Flogin.action%3FtargetUrl%3Dbase64aHR0cHM6Ly9qdy52Lnp6dS5lZHUuY24vZWFtcy9ob21lLmFjdGlvbg%3D%3D")
+time.sleep(10)
+# 输入账号
+web.find_element(By.ID, "username").send_keys("201984110313", Keys.ENTER)
+# 输入密码
+web.find_element(By.ID, "password").send_keys("Szxad96!", Keys.ENTER)
+time.sleep(10)
+# 点击我的成绩
+web.find_element(By.CSS_SELECTOR, '.expand > ul:nth-child(2) > div:nth-child(1) > li:nth-child(19) > a:nth-child(1)').click()
+time.sleep(5)
+# 点击所有学期成绩
+web.find_element(By.CLASS_NAME, 'toolbar-item-ge0').click()
+time.sleep(5)
+el = web.find_element(By.XPATH, '/html/body/table/tbody/tr/td[3]/div/div/div[3]/div[3]/table/tbody/tr[63]').text
+el = el.split(' ')
+add = el.pop(0)
+el[0] = add + ' ' + el[0]
+el.insert(6, ' ')
+
+table_name = "该死的电力工程"
+table = HTMLTable(caption=table_name)
+
+# 设置标题
+table.append_header_rows((('学年学期', '课程代码', '课程序号', '课程名称', '课程类别', '学分', '期末成绩', '补考成绩', '总评成绩', '最终', '绩点'),))
+# 设置数据
+table.append_data_rows((tuple(el),))
+# 标题样式
+caption_style = {
+    'text-align': 'center',
+    'cursor': 'pointer'
 }
-resp = requests.post("https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/login", data=data)
-# print(resp.text)
-# print('---------------------------------------------------------------------------------------')
-resp.encoding = 'utf8'
-url = obj.search(resp.text).group('url')
-resp = requests.get(url=url)
-resp.encoding = 'utf8'
-soup = BeautifulSoup(resp.text, "html.parser")
-value = soup.find('iframe')
-url = value['src']
-resp = requests.get(url)
-soup = BeautifulSoup(resp.text, "html.parser")
-values = soup.find_all('input')
-data = {
-    'did': values[0]['value'],
-    'door': values[1]['value'],
-    'fun18': values[2]['value'],
-    'sid': values[3]['value'],
-    'men6': values[4]['value'],
-    'ptopid': values[5]['value'],
-    'sid': values[6]['value'],
+table.caption.set_style(caption_style)
+# 设置边框
+border_style = {
+    'border-color': '#000',
+    'border-width': '1px',
+    'border-style': 'solid',
+    'border-collapse': 'collapse',
+    # 同时设置了表格居中
+    'margin': 'auto',
 }
-resp = requests.post('https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/jksb', data=data)
-resp.encoding = 'utf8'
-page = BeautifulSoup(resp.text, "html.parser")
-# 如果有验证码
-if page.find('img') is not None:
-    img = page.find('img')['src']
-    # 这里是对验证码的提取（百度文字识别接口）
-    data = {
-        'grant_type': 'client_credentials',
-        'client_id': 'WNChcFVChONBFqX6xmrkMDMV',
-        'client_secret': 'ou9XkXXPGQ5tIsqqhYFsrP0ZY0gch9dD'
+table.set_style(border_style)
+# 单元格边框
+table.set_cell_style(border_style)
+# 设置单元格样式
+cell_style = {
+        'text-align': 'center',
+        'padding': '4px',
+        'background-color': '#ffffff',
+        'font-size': '0.95em',
     }
-    resp = requests.post('https://aip.baidubce.com/oauth/2.0/token', data=data)
-    access_token = resp.json()['access_token']
-    data = {
-        'url': img
+table.set_cell_style(cell_style)
+# 表头样式
+header_cell_style = {
+    'text-align': 'center',
+    'padding': '4px',
+    'background-color': 'coral',
+    'color': '#FFFFFF',
+    'font-size': '0.95em',
     }
-    headers = {
-        'content-type': 'application/x-www-form-urlencoded'
-    }
-    resp = requests.post('https://aip.baidubce.com/rest/2.0/ocr/v1/handwriting?access_token=' + access_token, data=data,
-                         headers=headers)
-    print(resp.text)
-    results = resp.json()['words_result'][0]['words']
-    num_dict = {
-        '零': 0,
-        '壹': 1,
-        '贰': 2,
-        '叁': 3,
-        '肆': 4,
-        '伍': 5,
-        '陆': 6,
-        '柒': 7,
-        '捌': 8,
-        '玖': 9,
-    }
-    res = str(num_dict[results[0]]) + str(num_dict[results[1]]) + str(num_dict[results[2]]) + str(num_dict[results[3]])
-    data = {
-        'myvs_94c': res,
-        'myvs_1': '否',
-        'myvs_2': '否',
-        'myvs_3': '否',
-        'myvs_4': '否',
-        'myvs_5': '否',
-        'myvs_7': '否',
-        'myvs_8': '否',
-        'myvs_11': '否',
-        'myvs_12': '否',
-        'myvs_13': '否',
-        'myvs_15': '否',
-        'myvs_13a': '41',  # 河南省
-        'myvs_13b': os.environ["city"],  # （郑州市：4101）
-        'myvs_13c': '文化路97号',  # 街道
-        'myvs_24': '否',  # 是否为当日返郑人员
-        'memo22': '成功获取',
-        'did': page.find("input", attrs={"name": "did"})['value'],
-        'door': page.find("input", attrs={"name": "door"})['value'],
-        'day6': page.find("input", attrs={"name": "day6"})['value'],
-        'men6': page.find("input", attrs={"name": "men6"})['value'],
-        'sheng6': page.find("input", attrs={"name": "sheng6"})['value'],
-        'shi6': page.find("input", attrs={"name": "shi6"})['value'],
-        'fun3': page.find("input", attrs={"name": "fun3"})['value'],
-        'jingdu': page.find("input", attrs={"name": "jingdu"})['value'],
-        'weidu': page.find("input", attrs={"name": "weidu"})['value'],
-        'ghdn28': page.find("input", attrs={"name": "ghdn28"})['value'],
-        'ptopid': page.find("input", attrs={"name": "ptopid"})['value'],
-        'sid': page.find("input", attrs={"name": "sid"})['value']
-    }
-else:
-    data = {
-        'myvs_1': '否',
-        'myvs_2': '否',
-        'myvs_3': '否',
-        'myvs_4': '否',
-        'myvs_5': '否',
-        'myvs_7': '否',
-        'myvs_8': '否',
-        'myvs_11': '否',
-        'myvs_12': '否',
-        'myvs_13': '否',
-        'myvs_15': '否',
-        'myvs_13a': '41',  # 河南省
-        'myvs_13b': os.environ["city"],  # （郑州市：4101）
-        'myvs_13c': '文化路97号',  # 街道
-        'myvs_24': '否',  # 是否为当日返郑人员
-        'memo22': '成功获取',
-        'did': page.find("input", attrs={"name": "did"})['value'],
-        'door': page.find("input", attrs={"name": "door"})['value'],
-        'day6': page.find("input", attrs={"name": "day6"})['value'],
-        'men6': page.find("input", attrs={"name": "men6"})['value'],
-        'sheng6': page.find("input", attrs={"name": "sheng6"})['value'],
-        'shi6': page.find("input", attrs={"name": "shi6"})['value'],
-        'fun3': page.find("input", attrs={"name": "fun3"})['value'],
-        'jingdu': page.find("input", attrs={"name": "jingdu"})['value'],
-        'weidu': page.find("input", attrs={"name": "weidu"})['value'],
-        'ghdn28': page.find("input", attrs={"name": "ghdn28"})['value'],
-        'ptopid': page.find("input", attrs={"name": "ptopid"})['value'],
-        'sid': page.find("input", attrs={"name": "sid"})['value']
-    }
-resp = requests.post("https://jksb.v.zzu.edu.cn/vls6sss/zzujksb.dll/jksb", data=data)
-resp.encoding = 'utf8'
-soup = BeautifulSoup(resp.text, "html.parser")
+table.set_header_cell_style(header_cell_style)
+# 如果成绩小于60则标红
+for row in table.iter_data_rows():
+    for i in range(6, 10):
+        try:
+            if int(row[i].value) < 60:
+                row[i].set_style({
+                    'background-color': '#ffdddd',
+                })
+        except Exception as e:
+            print(e)
+
+html = table.to_html()
+print(html)
 yag = yagmail.SMTP(user='1586924294@qq.com', password='xrpalckormpjjijh', host='smtp.qq.com')
-if obj1.search(resp.text) is None:
-    print('打卡成功！')
-    contents = obj2.search(resp.text).group('success')
-    yag.send(to=os.environ["email"], subject='zzuClock打卡成功！', contents=contents)
-    yag.close()
-    print('发送邮件成功！')
-else:
-    contents = f'<h1>自动打卡失败，请及时打卡！</h1><h1>失败原因：{soup.find("li").text}</h1>'
-    yag.send(to=os.environ["email"], subject='zzuClock打卡失败！', contents=contents)
-    yag.close()
-    print('打卡失败！')
-    print('失败原因：' + soup.find("li").text)
+yag.send(to='1586924294@qq.com', subject='成绩提醒！', contents=html)
