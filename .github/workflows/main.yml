@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: zzuClock
+name: hope
 
 # Controls when the workflow will run
 on:
@@ -39,4 +39,4 @@ jobs:
 #             upw: ${{secrets.upw}}
 #             email: ${{secrets.email}}
 #             city: ${{secrets.city}}
-        run: python clock.py
+        run: python hope.py
