@@ -1,6 +1,7 @@
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import os
 import time
 from HTMLTable import HTMLTable
 import yagmail
@@ -9,9 +10,9 @@ web = Firefox()
 web.get("https://cas.s.zzu.edu.cn/cas/login?service=https%3A%2F%2Fjw.v.zzu.edu.cn%2Feams%2Fsso%2Flogin.action%3FtargetUrl%3Dbase64aHR0cHM6Ly9qdy52Lnp6dS5lZHUuY24vZWFtcy9ob21lLmFjdGlvbg%3D%3D")
 time.sleep(10)
 # 输入账号
-web.find_element(By.ID, "username").send_keys("201984110313", Keys.ENTER)
+web.find_element(By.ID, "username").send_keys(os.environ["uid"], Keys.ENTER)
 # 输入密码
-web.find_element(By.ID, "password").send_keys("Szxad96!", Keys.ENTER)
+web.find_element(By.ID, "password").send_keys(os.environ["psw"], Keys.ENTER)
 time.sleep(10)
 # 点击我的成绩
 web.find_element(By.CSS_SELECTOR, '.expand > ul:nth-child(2) > div:nth-child(1) > li:nth-child(19) > a:nth-child(1)').click()
